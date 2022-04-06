@@ -1,0 +1,27 @@
+version: 0.2
+
+phases: 
+  install: 
+    commands: 
+      - "apt install unzip -y"
+      - "wget https://releases.hashicorp.com/terraform/1.1.7/terraform_1.1.7_linux_amd64.zip"
+      - "unzip terraform_1.1.7_linux_amd64.zip"
+      - "mv terraform /usr/local/bin/"
+  pre_build:
+    commands:
+      - pwd
+      - cd Profiles 
+      - terraform init -backend-config="bucket=casestudy-backend-bucket" -backend-config="key=state/terraform.tfstate" -backend-config="region=us-east-1" -backend-config="encrypt=true" -backend-config="dynamodb_table=terraform-state-lock-dynamo"
+  build:
+    commands:
+      - terraform workspace select dev || terraform workspace new dev
+      - terraform plan -var-file="../environment/input_vars.tfvars" -out="plan-output"
+      - mv plan-output ../plan-output
+  post_build:
+    commands:
+      - echo "terraform plan completed on ´date´"
+
+artifacts:
+  files:
+    - plan-output
+
