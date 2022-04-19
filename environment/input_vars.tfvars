@@ -1,8 +1,8 @@
 # DynamoDB variables
 dynamodb_name                   = "terraform-state-lock-dynamo"
-dynamodb_hash_key                        = "LockID"
-dynamodb_read_capacity                   = 20
-dynamodb_write_capacity                  = 20
+dynamodb_hash_key               = "LockID"
+dynamodb_read_capacity          = 20
+dynamodb_write_capacity         = 20
 dynamodb_attribute_name         = "LockID"
 dynamodb_attribute_type         = "S"
 
