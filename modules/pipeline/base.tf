@@ -1,165 +1,165 @@
 # plan build
 resource "aws_codebuild_project" "tf-plan" {
-  name          = "tf-cicd-plan"
-  description   = "Plan terraform IaC"
+  name          = var.build_project_plan_name
+  description   = var.build_project_apply_description
   service_role  = aws_iam_role.tf-codebuild-role.arn
 
   artifacts {
-    type = "CODEPIPELINE"
+    type = var.pl_artifacts_type
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/standard:4.0"
-    type                        = "LINUX_CONTAINER"
+    compute_type    = var.pl_environment_compute_type
+    image           = var.pl_environment_image
+    type            = var.pl_environment_type 
   }
     
  source {
-     type   = "CODEPIPELINE"
-     buildspec = file("${path.module}/buildspec/plan-buildspec.yml")
+     type   = var.pl_artifacts_type
+     buildspec = file("${path.module}/${var.buildspec_plan}")
  }
 }
 
 # apply build
 resource "aws_codebuild_project" "tf-apply" {
-  name          = "tf-cicd-apply"
-  description   = "Build terraform IaC"
+  name          = var.build_project_apply_name 
+  description   = var.build_project_apply_description
   service_role  = aws_iam_role.tf-codebuild-role.arn
 
   artifacts {
-    type = "CODEPIPELINE"
+    type = var.pl_artifacts_type
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/standard:4.0"
-    type                        = "LINUX_CONTAINER"
+    compute_type    = var.pl_environment_compute_type
+    image           = var.pl_environment_image
+    type            = var.pl_environment_type
   }
     
  source {
-     type   = "CODEPIPELINE"
-     buildspec = file("${path.module}/buildspec/apply-buildspec.yml")
+     type       = var.pl_artifacts_type
+     buildspec  = file("${path.module}/${var.buildspec_apply}")
  }
 }
 
 # destroy build
 resource "aws_codebuild_project" "tf-destroy" {
-  name          = "tf-cicd-destroy"
-  description   = "Destroy terraform IaC"
+  name          = var.build_project_destroy_name
+  description   = var.build_project_destroy_description
   service_role  = aws_iam_role.tf-codebuild-role.arn
 
   artifacts {
-    type = "CODEPIPELINE"
+    type = var.pl_artifacts_type
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/standard:4.0"
-    type                        = "LINUX_CONTAINER"
+    compute_type    = var.pl_environment_compute_type
+    image           = var.pl_environment_image
+    type            = var.pl_environment_type
   }
     
  source {
-     type   = "CODEPIPELINE"
-     buildspec = file("${path.module}/buildspec/destroy-buildspec.yml")
+     type       = var.pl_artifacts_type
+     buildspec  = file("${path.module}/${var.buildspec_destroy}")
  }
 }
 
 resource "aws_codepipeline" "cicd_pipeline" {
 
-    name = "tf-cicd"
-    role_arn = aws_iam_role.tf-codepipeline-role.arn
+    name        = var.codepipeline_name
+    role_arn    = aws_iam_role.tf-codepipeline-role.arn
 
     artifact_store {
-        type="S3"
-        location = var.s3_id
+        type        = var.pipeline_artifact_store
+        location    = var.s3_id
     }
 
     stage {
-        name = "Source"
+        name = var.pl_source_name
         action{
-            name = "Source"
-            category = "Source"
-            owner = "AWS"
-            provider = "CodeStarSourceConnection"
-            version = "1"
-            output_artifacts = ["tf-code"]
+            name                = var.pl_source_name
+            category            = var.pl_source_category
+            owner               = var.pl_owner
+            provider            = var.pl_source_provider
+            version             = var.pl_version 
+            output_artifacts    = [var.pl_source_output]
             configuration = {
-                FullRepositoryId = "Mike-In-The-Cloud/drone_shuttles"
-                BranchName   = "dev-code-pipeline"
-                ConnectionArn = var.codestar_connector_credentials
-                OutputArtifactFormat = "CODE_ZIP"
+                FullRepositoryId        = var.repository_id 
+                BranchName              = var.repository_branch 
+                ConnectionArn           = var.codestar_connector_credentials
+                OutputArtifactFormat    = var.pl_source_output_format
             }
         }
     }
 # build stage one
     stage {
-        name ="Plan"
+        name = var.pl_plan_name
         action{
-            name                = "Build"
-            category            = "Build"
-            provider            = "CodeBuild"
-            version             = "1"
-            owner               = "AWS"
-            input_artifacts     = ["tf-code"]
-            output_artifacts    = ["plan-output"]
+            name                = var.pl_action_category
+            category            = var.pl_action_category 
+            provider            = var.pl_provider
+            version             = var.pl_version
+            owner               = var.pl_owner
+            input_artifacts     = [var.pl_source_output]
+            output_artifacts    = [var.pl_plan_action_output]
             configuration       = {
-                ProjectName     = "tf-cicd-plan"
+                ProjectName     = var.pl_plan_action_projectname
             }
         }
     }
 # manual approval
     stage {
-        name = "Approve_Build"
+        name = var.pl_manual_build_approval_name
         action {
-            name     = "Approval"
-            category = "Approval"
-            owner    = "AWS"
-            provider = "Manual"
-            version  = "1"
+            name     = var.pl_manual_action_name
+            category = var.pl_manual_action_category 
+            owner    = var.pl_owner
+            provider = var.pl_manual_action_provider
+            version  = var.pl_version
 
         }
     }   
 
 # build stage 2
     stage {
-        name ="Deploy"
+        name = var.pl_apply_name
         action{
-            name = "Deploy"
-            category = "Build"
-            provider = "CodeBuild"
-            version = "1"
-            owner = "AWS"
-            input_artifacts = ["tf-code"]
-            configuration = {
-                ProjectName = "tf-cicd-apply"
+            name            = var.pl_apply_name
+            category        = var.pl_action_category
+            provider        = var.pl_provider
+            version         = var.pl_version
+            owner           = var.pl_owner
+            input_artifacts = [var.pl_source_output]
+            configuration   = {
+                ProjectName = var.pl_apply_action_projectname
             }
         }
     }
 
 # manual approval     
     stage {
-        name = "Approve_Destory"
+        name = var.pl_manual_destroy_name
         action {
-            name     = "Approve_Destroy"
-            category = "Approval"
-            owner    = "AWS"
-            provider = "Manual"
-            version  = "1"
+            name     = var.pl_manual_destroy_name
+            category = var.pl_manual_action_category
+            owner    = var.pl_provider
+            provider = var.pl_manual_action_provider
+            version  = var.pl_version
 
         }
     } 
     # destroy
     stage {
-        name ="Destroy"
+        name = var.pl_destroy_name 
         action{
-            name = "Destory"
-            category = "Build"
-            provider = "CodeBuild"
-            version = "1"
-            owner = "AWS"
-            input_artifacts = ["tf-code"]
-            configuration = {
-                ProjectName = "tf-cicd-destory"
+            name            = var.pl_destroy_name 
+            category        = var.pl_action_category
+            provider        = var.pl_provider
+            version         = var.pl_version
+            owner           = var.pl_owner
+            input_artifacts = [var.pl_source_output]
+            configuration   = {
+                ProjectName = var.pl_destroy_action_projectname
             }
         }
     } 

@@ -1,12 +1,11 @@
 resource "aws_dynamodb_table" "dynamodb-terraform-state-lock" {
-  name = "terraform-state-lock-dynamo"
-  hash_key = "LockID"
-  read_capacity = 20
-  write_capacity = 20
+  name = var.dynamodb_name
+  hash_key = var.dynamodb_hash_key
+  read_capacity = var.dynamodb_read_capacity
+  write_capacity = var.dynamodb_write_capacity
  
   attribute {
-    name = "LockID"
-    type = "S"
+    name = var.dynamodb_attribute_name
+    type = var.dynamodb_attribute_type
   }
-
 }
