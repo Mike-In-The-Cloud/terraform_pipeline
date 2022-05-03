@@ -142,7 +142,7 @@ resource "aws_codepipeline" "cicd_pipeline" {
         action {
             name     = var.pl_manual_destroy_name
             category = var.pl_manual_action_category
-            owner    = var.pl_provider
+            owner    = var.pl_owner
             provider = var.pl_manual_action_provider
             version  = var.pl_version
 
