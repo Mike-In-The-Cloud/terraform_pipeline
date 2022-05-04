@@ -7,7 +7,7 @@ dynamodb_attribute_name         = "LockID"
 dynamodb_attribute_type         = "S"
 
 # S3 variables
-bucket_name     = "pipeline_artifacts"
+bucket_name     = "pipeline-artifacts-casestudy-cicd"
 
 
 #Pipeline variables

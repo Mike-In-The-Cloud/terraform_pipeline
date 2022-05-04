@@ -7,14 +7,14 @@ terraform {
       version = "~> 4.0"
     }
   }
-  # backend "s3" {
-  #   bucket  = "casestudy-backend-bucket"
-  #   encrypt = true
-  #   key     = "state/terraform.tfstate"
-  #   region = "us-east-1"
-  #   dynamodb_table = "terraform-state-lock-dynamo"
+  backend "s3" {
+    bucket  = "pipeline-artifacts-casestudy-cicd"
+    encrypt = true
+    key     = "state/terraform.tfstate"
+    region = "us-east-1"
+    dynamodb_table = "terraform-state-lock-dynamo"
     
-  # }
+  }
 }
 
 provider "aws" {
